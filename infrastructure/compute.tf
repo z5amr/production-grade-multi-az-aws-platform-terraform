@@ -11,8 +11,17 @@ user_data = <<-EOF
               systemctl start nginx
               systemctl enable nginx
               EOF
-              
+
   tags = {
     Name = "web-server"
+  }
+}
+
+resource "aws_eip" "web_server_eip" {
+  instance = aws_instance.web_server.id
+  domain   = "vpc"
+
+  tags = {
+    Name = "web-server-eip"
   }
 }

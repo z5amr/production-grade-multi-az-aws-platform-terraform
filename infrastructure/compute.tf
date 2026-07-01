@@ -1,7 +1,7 @@
 resource "aws_instance" "web_server" {
   ami           = "ami-0c101f26f147fa7fd"
   instance_type = "t3.micro"
-  subnet_id = aws_subnet.public_subnet.id
+  subnet_id = aws_subnet.public_subnet_a.id
   vpc_security_group_ids = [aws_security_group.web_sg.id]
   key_name = aws_key_pair.web_server_key.key_name
 

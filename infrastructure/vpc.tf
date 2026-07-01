@@ -8,14 +8,25 @@ resource "aws_vpc" "main_vpc" {
   }
 }
 
-resource "aws_subnet" "public_subnet" {
+resource "aws_subnet" "public_subnet_a" {
   vpc_id            = aws_vpc.main_vpc.id
-  cidr_block        = var.public_subnet_cidr
+  cidr_block        = var.public_subnet_cidr_a
   availability_zone = "${var.aws_region}a"
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "public-subnet"
+    Name = "public-subnet-a"
+  }
+}
+
+resource "aws_subnet" "public_subnet_b" {
+  vpc_id            = aws_vpc.main_vpc.id
+  cidr_block        = var.public_subnet_cidr_b
+  availability_zone = "${var.aws_region}b"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "public-subnet-b"
   }
 }
 
@@ -40,8 +51,13 @@ resource "aws_route_table" "public_rt" {
   }
 }
 
-resource "aws_route_table_association" "public_assoc" {
-  subnet_id      = aws_subnet.public_subnet.id
+resource "aws_route_table_association" "public_assoc_a" {
+  subnet_id      = aws_subnet.public_subnet_a.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+resource "aws_route_table_association" "public_assoc_b" {
+  subnet_id      = aws_subnet.public_subnet_b.id
   route_table_id = aws_route_table.public_rt.id
 }
 

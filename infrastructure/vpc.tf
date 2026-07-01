@@ -39,6 +39,13 @@ resource "aws_subnet" "private_app_a" {
   }
 }
 
+resource "aws_subnet" "private_app_b" {
+  vpc_id            = aws_vpc.main_vpc.id
+  cidr_block        = var.private_app_subnet_cidr_b
+  availability_zone = "${var.aws_region}b"
+  tags              = { Name = "private-app-subnet-b" }
+}
+
 resource "aws_subnet" "private_db_a" {
   vpc_id            = aws_vpc.main_vpc.id
   cidr_block        = var.private_db_subnet_cidr_a
@@ -96,6 +103,11 @@ resource "aws_route_table_association" "private_app_assoc" {
   route_table_id = aws_route_table.private_rt.id
 }
 
+resource "aws_route_table_association" "private_app_b_assoc" {
+  subnet_id      = aws_subnet.private_app_b.id
+  route_table_id = aws_route_table.private_rt.id
+}
+
 resource "aws_route_table_association" "private_db_assoc" {
   subnet_id      = aws_subnet.private_db_a.id
   route_table_id = aws_route_table.private_rt.id
@@ -111,17 +123,9 @@ resource "aws_route_table_association" "public_assoc_b" {
   route_table_id = aws_route_table.public_rt.id
 }
 
-resource "aws_security_group" "web_sg" {
-  name        = "web-server-sg"
-  description = "Allow SSH and HTTP inbound traffic"
+resource "aws_security_group" "alb_sg" {
+  name        = "alb-sg"
   vpc_id      = aws_vpc.main_vpc.id
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 
   ingress {
     from_port   = 80
@@ -136,8 +140,23 @@ resource "aws_security_group" "web_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+}
 
-  tags = {
-    Name = "web-security-group"
+resource "aws_security_group" "app_sg" {
+  name        = "app-sg"
+  vpc_id      = aws_vpc.main_vpc.id
+
+  ingress {
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }

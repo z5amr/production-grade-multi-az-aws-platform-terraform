@@ -30,6 +30,35 @@ resource "aws_subnet" "public_subnet_b" {
   }
 }
 
+resource "aws_subnet" "private_app_a" {
+  vpc_id            = aws_vpc.main_vpc.id
+  cidr_block        = var.private_app_subnet_cidr_a
+  availability_zone = "us-east-1a"
+  tags              = {
+    Name = "private-app-subnet-a" 
+  }
+}
+
+resource "aws_subnet" "private_db_a" {
+  vpc_id            = aws_vpc.main_vpc.id
+  cidr_block        = var.private_db_subnet_cidr_a
+  availability_zone = "us-east-1a"
+  tags              = { 
+    Name = "private-db-subnet-a" 
+  }
+}
+
+resource "aws_eip" "nat_eip" {
+  domain = "vpc"
+}
+
+resource "aws_nat_gateway" "main" {
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = aws_subnet.public_subnet_a.id
+
+  tags = { Name = "main-nat-gateway" }
+}
+
 resource "aws_internet_gateway" "main_igw" {
   vpc_id = aws_vpc.main_vpc.id
 
@@ -49,6 +78,27 @@ resource "aws_route_table" "public_rt" {
   tags = {
     Name = "public-route-table"
   }
+}
+
+resource "aws_route_table" "private_rt" {
+  vpc_id = aws_vpc.main_vpc.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.main.id
+  }
+
+  tags = { Name = "private-route-table" }
+}
+
+resource "aws_route_table_association" "private_app_assoc" {
+  subnet_id      = aws_subnet.private_app_a.id
+  route_table_id = aws_route_table.private_rt.id
+}
+
+resource "aws_route_table_association" "private_db_assoc" {
+  subnet_id      = aws_subnet.private_db_a.id
+  route_table_id = aws_route_table.private_rt.id
 }
 
 resource "aws_route_table_association" "public_assoc_a" {

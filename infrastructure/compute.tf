@@ -10,8 +10,21 @@ resource "aws_launch_template" "web_template" {
     dnf install -y nginx
     systemctl start nginx
     systemctl enable nginx
+
+    yum install -y amazon-cloudwatch-agent
+    mkdir -p /opt/aws/amazon-cloudwatch-agent/etc/
+    
+    cat <<EOC > /opt/aws/amazon-cloudwatch-agent/etc/config.json
+    ${file("cw_config.json")}
+    EOC
+    
+    /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/config.json -s
   EOF
   )
+
+  iam_instance_profile {
+    name = aws_iam_instance_profile.app_profile.name
+  }
 
   network_interfaces {
     associate_public_ip_address = false
@@ -24,6 +37,43 @@ resource "aws_launch_template" "web_template" {
       Name = "web-server-asg"
     }
   }
+}
+
+resource "aws_ec2_instance_connect_endpoint" "eice_a" {
+  subnet_id          = aws_subnet.private_app_a.id
+  security_group_ids = [aws_security_group.connectivity_sg.id]
+}
+
+resource "aws_ec2_instance_connect_endpoint" "eice_b" {
+  subnet_id          = aws_subnet.private_app_b.id
+  security_group_ids = [aws_security_group.connectivity_sg.id]
+}
+
+resource "aws_vpc_endpoint" "ssm" {
+  vpc_id              = aws_vpc.main_vpc.id
+  service_name        = "com.amazonaws.${var.aws_region}.ssm"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = [aws_subnet.private_app_a.id, aws_subnet.private_app_b.id]
+  security_group_ids  = [aws_security_group.connectivity_sg.id]
+  private_dns_enabled = true
+}
+
+resource "aws_vpc_endpoint" "ssmmessages" {
+  vpc_id              = aws_vpc.main_vpc.id
+  service_name        = "com.amazonaws.${var.aws_region}.ssmmessages"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = [aws_subnet.private_app_a.id, aws_subnet.private_app_b.id]
+  security_group_ids  = [aws_security_group.connectivity_sg.id]
+  private_dns_enabled = true
+}
+
+resource "aws_vpc_endpoint" "ec2messages" {
+  vpc_id              = aws_vpc.main_vpc.id
+  service_name        = "com.amazonaws.${var.aws_region}.ec2messages"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = [aws_subnet.private_app_a.id, aws_subnet.private_app_b.id]
+  security_group_ids  = [aws_security_group.connectivity_sg.id]
+  private_dns_enabled = true
 }
 
 resource "aws_key_pair" "web_server_key" {

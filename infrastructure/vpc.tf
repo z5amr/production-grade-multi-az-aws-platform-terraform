@@ -55,6 +55,13 @@ resource "aws_subnet" "private_db_a" {
   }
 }
 
+resource "aws_subnet" "private_db_b" {
+  vpc_id            = aws_vpc.main_vpc.id
+  cidr_block        = var.private_db_subnet_cidr_b
+  availability_zone = "${var.aws_region}b"
+  tags              = { Name = "private-db-subnet-b" }
+}
+
 resource "aws_eip" "nat_eip" {
   domain = "vpc"
 }
@@ -111,6 +118,16 @@ resource "aws_route_table_association" "private_app_b_assoc" {
 resource "aws_route_table_association" "private_db_assoc" {
   subnet_id      = aws_subnet.private_db_a.id
   route_table_id = aws_route_table.private_rt.id
+}
+
+resource "aws_route_table_association" "private_db_b_assoc" {
+  subnet_id      = aws_subnet.private_db_b.id
+  route_table_id = aws_route_table.private_rt.id
+}
+
+resource "aws_db_subnet_group" "db_subnet_group" {
+  name       = "main-db-subnet-group"
+  subnet_ids = [aws_subnet.private_db_a.id, aws_subnet.private_db_b.id]
 }
 
 resource "aws_route_table_association" "public_assoc_a" {

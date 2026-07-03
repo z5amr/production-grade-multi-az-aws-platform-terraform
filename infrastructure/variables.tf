@@ -39,3 +39,9 @@ variable "private_db_subnet_cidr_a" {
   type        = string
   default     = "10.0.20.0/24"
 }
+
+variable "private_db_subnet_cidr_b" {
+  description = "CIDR for private database subnet in AZ B"
+  type        = string
+  default     = "10.0.21.0/24"
+}

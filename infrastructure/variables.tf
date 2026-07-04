@@ -45,3 +45,32 @@ variable "private_db_subnet_cidr_b" {
   type        = string
   default     = "10.0.21.0/24"
 }
+
+variable "db_password" {
+  description = "Password for the database"
+  type        = string
+  sensitive   = true
+}
+
+variable "db_parameter_group_family" {
+  description = "The family of the DB parameter group"
+  type        = string
+  default     = "postgres16"
+}
+
+variable "db_engine" {
+  description = "Database engine (e.g., postgres, mysql, mariadb)"
+  type        = string
+  default     = "postgres"
+}
+
+variable "db_engine_version" {
+  description = "Major version for the DB engine"
+  type        = string
+  default     = "16"
+}
+
+variable "db_port" {
+  type    = number
+  default = 5432
+}

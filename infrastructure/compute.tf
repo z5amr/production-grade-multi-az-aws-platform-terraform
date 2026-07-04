@@ -39,6 +39,32 @@ resource "aws_launch_template" "web_template" {
   }
 }
 
+resource "aws_db_parameter_group" "main_pg" {
+  name   = "main-db-pg"
+  family = var.db_parameter_group_family
+
+  parameter {
+    name  = "log_connections"
+    value = "1"
+  }
+}
+
+resource "aws_db_instance" "main_db" {
+  identifier             = "main-db-instance"
+  engine                 = var.db_engine
+  engine_version         = var.db_engine_version
+  instance_class         = "db.t3.micro"
+  allocated_storage      = 20
+  db_name                = "appdb"
+  username               = "dbadmin"
+  password               = var.db_password
+  skip_final_snapshot    = true
+  multi_az               = true
+  storage_encrypted      = true
+  db_subnet_group_name   = aws_db_subnet_group.main.name
+  vpc_security_group_ids = [aws_security_group.db_sg.id]
+}
+
 resource "aws_ec2_instance_connect_endpoint" "eice_a" {
   subnet_id          = aws_subnet.private_app_a.id
   security_group_ids = [aws_security_group.connectivity_sg.id]

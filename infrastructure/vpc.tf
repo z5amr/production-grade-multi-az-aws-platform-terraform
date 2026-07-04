@@ -62,6 +62,13 @@ resource "aws_subnet" "private_db_b" {
   tags              = { Name = "private-db-subnet-b" }
 }
 
+resource "aws_db_subnet_group" "main" {
+  name       = "main-db-subnet-group"
+  subnet_ids = [aws_subnet.private_db_a.id, aws_subnet.private_db_b.id]
+
+  tags = { Name = "main-db-subnet-group" }
+}
+
 resource "aws_eip" "nat_eip" {
   domain = "vpc"
 }
@@ -123,11 +130,6 @@ resource "aws_route_table_association" "private_db_assoc" {
 resource "aws_route_table_association" "private_db_b_assoc" {
   subnet_id      = aws_subnet.private_db_b.id
   route_table_id = aws_route_table.private_rt.id
-}
-
-resource "aws_db_subnet_group" "db_subnet_group" {
-  name       = "main-db-subnet-group"
-  subnet_ids = [aws_subnet.private_db_a.id, aws_subnet.private_db_b.id]
 }
 
 resource "aws_route_table_association" "public_assoc_a" {

@@ -50,21 +50,21 @@ resource "aws_db_parameter_group" "main_pg" {
 }
 
 resource "aws_db_instance" "main_db" {
-  identifier             = "main-db-instance"
-  engine                 = var.db_engine
-  engine_version         = var.db_engine_version
-  instance_class         = "db.t3.micro"
-  allocated_storage      = 20
-  db_name                = "appdb"
-  username               = "dbadmin"
-  password               = var.db_password
-  skip_final_snapshot    = true
-  multi_az               = true
-  storage_encrypted      = true
-  db_subnet_group_name   = aws_db_subnet_group.main.name
-  vpc_security_group_ids = [aws_security_group.db_sg.id]
-  backup_retention_period = 1
+  identifier              = "main-db-instance"
+  engine                  = var.db_engine
+  engine_version          = var.db_engine_version
+  instance_class          = "db.t3.micro"
+  allocated_storage       = 20
+  db_name                 = "appdb"
+  username                = "dbadmin"
+  password                = var.db_password
+  skip_final_snapshot     = true
+  multi_az                = true
+  storage_encrypted       = true
+  db_subnet_group_name    = aws_db_subnet_group.main.name
+  vpc_security_group_ids  = [aws_security_group.db_sg.id]
   backup_window           = "03:00-04:00"
+  backup_retention_period = 1
   deletion_protection     = true
 }
 
@@ -111,7 +111,7 @@ resource "aws_key_pair" "web_server_key" {
 }
 
 resource "aws_autoscaling_group" "web_asg" {
-  vpc_zone_identifier = [aws_subnet.private_app_a.id,aws_subnet.private_app_b.id]
+  vpc_zone_identifier = [aws_subnet.private_app_a.id, aws_subnet.private_app_b.id]
   desired_capacity    = 2
   max_size            = 4
   min_size            = 2
@@ -120,4 +120,36 @@ resource "aws_autoscaling_group" "web_asg" {
     id      = aws_launch_template.web_template.id
     version = "$Latest"
   }
+}
+
+resource "aws_iam_role" "app_instance_role" {
+  name = "app-instance-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_access" {
+  role       = aws_iam_role.app_instance_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_access" {
+  role       = aws_iam_role.app_instance_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "app_profile" {
+  name = "app-instance-profile"
+  role = aws_iam_role.app_instance_role.name
 }

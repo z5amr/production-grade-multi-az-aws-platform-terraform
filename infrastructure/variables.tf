@@ -1,3 +1,13 @@
+variable "domain_name" {
+  description = "The domain name for the ACM certificate"
+  type        = string
+}
+
+variable "admin_email" {
+  description = "The email address for administrative alerts"
+  type        = string
+}
+
 variable "aws_region" {
   description = "AWS region for deployment"
   type        = string

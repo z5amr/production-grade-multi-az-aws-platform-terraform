@@ -7,3 +7,8 @@ output "db_endpoint" {
   description = "The endpoint of the RDS instance"
   value       = aws_db_instance.main_db.endpoint
 }
+
+output "cloudfront_domain_name" {
+  description = "The domain name of the CloudFront distribution"
+  value       = aws_cloudfront_distribution.main.domain_name
+}
